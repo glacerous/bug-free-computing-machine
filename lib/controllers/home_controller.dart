@@ -1,0 +1,59 @@
+import 'package:get/get.dart';
+import '../models/item_model.dart';
+import '../services/api_service.dart';
+
+// =============================================================================
+// HOME CONTROLLER (Modul 8 hal. 170 & Modul 5 hal. 91)
+// Sudah siap Search lokal (tidak aktif sampai [ENABLE SEARCH] di-uncomment di HomePage).
+// =============================================================================
+
+class HomeController extends GetxController {
+  final RxList<ItemModel> _items = <ItemModel>[].obs;
+  final RxList<CharacterModel> _characters = <CharacterModel>[].obs;
+  final RxBool _isLoading = false.obs;
+  final RxString _searchQuery = ''.obs;
+
+  bool get isLoading => _isLoading.value;
+
+  // Otomatis filter berdasarkan _searchQuery (kalau kosong, kembalikan semua)
+  List<ItemModel> get items {
+    if (_searchQuery.value.isEmpty) return _items;
+    return _items
+        .where((e) =>
+            e.spell.toLowerCase().contains(_searchQuery.value.toLowerCase()))
+        .toList();
+  }
+
+  List<CharacterModel> get characters {
+    if (_searchQuery.value.isEmpty) return _characters;
+    return _characters
+        .where((e) =>
+            e.fullName.toLowerCase().contains(_searchQuery.value.toLowerCase()))
+        .toList();
+  }
+
+  void search(String query) {
+    _searchQuery.value = query.trim();
+  }
+
+  @override
+  void onInit() {
+    _retrieveData();
+    super.onInit();
+  }
+
+  Future<void> _retrieveData() async {
+    try {
+      _isLoading.value = true;
+      final data = await ApiService.fetchItems();
+final chars = await ApiService.fetchCharacters();
+      _items.assignAll(data);
+_characters.assignAll(chars);
+      _items.assignAll(data);
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+}
